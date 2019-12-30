@@ -1,0 +1,169 @@
+-----------------------------
+player1 wins: 250
+player2 wins: 79
+-----------------------------
+player1 wins: 251
+player2 wins: 80
+-----------------------------
+player1 wins: 251
+player2 wins: 80
+-----------------------------
+player1 wins: 250
+player2 wins: 79
+ties: 171
+-----------------------------
+player1 wins: 251
+player2 wins: 80
+ties: 169
+-----------------------------
+player1 wins: 251
+player2 wins: 80
+ties: 169
+-----------------------------
+player1 wins: 501
+player2 wins: 160
+ties: 339
+-----------------------------
+player1 wins: 501
+player2 wins: 499
+ties: 0
+-----------------------------
+player1 wins: 501
+player2 wins: 499
+ties: 0
+-----------------------------
+player1 wins: 293
+player2 wins: 499
+ties: 208
+-----------------------------
+player1 wins: 160
+player2 wins: 499
+ties: 341
+-----------------------------
+player1 wins: 160
+player2 wins: 499
+ties: 341
+-----------------------------
+player1 wins: 160
+player2 wins: 499
+ties: 341
+-----------------------------
+player1 wins: 81
+player2 wins: 207
+ties: 712
+-----------------------------
+player1 wins: 159
+player2 wins: 499
+ties: 342
+-----------------------------
+player1 wins: 159
+player2 wins: 499
+ties: 342
+-----------------------------
+player1 wins: 158
+player2 wins: 499
+ties: 343
+
+Refreshed Weights with player 2
+
+
+-----------------------------
+player1 wins: 116
+player2 wins: 345
+ties: 539
+-----------------------------
+player1 wins: 160
+player2 wins: 499
+ties: 341
+-----------------------------
+player1 wins: 160
+player2 wins: 499
+ties: 341
+
+reset Weights
+-----------------------------
+player1 wins: 500
+player2 wins: 159
+ties: 341
+-----------------------------
+player1 wins: 501
+player2 wins: 160
+ties: 339
+-----------------------------
+player1 wins: 501
+player2 wins: 160
+ties: 339
+-----------------------------
+player1 wins: 501
+player2 wins: 160
+ties: 339
+-----------------------------
+player1 wins: 501
+player2 wins: 160
+ties: 339
+-----------------------------
+player1 wins: 501
+player2 wins: 159
+ties: 340
+
+Eta to 0.01 -> 0.15
+-----------------------------
+player1 wins: 500
+player2 wins: 498
+ties: 2
+
+Eta to 0.15 -> 0.015
+-----------------------------
+player1 wins: 499
+player2 wins: 501
+ties: 0
+
+Eta to 0.015 -> 0.05
+-----------------------------
+player1 wins: 501
+player2 wins: 287
+ties: 212
+-----------------------------
+player1 wins: 501
+player2 wins: 200
+ties: 299
+-----------------------------
+player1 wins: 501
+player2 wins: 200
+ties: 299
+-----------------------------
+player1 wins: 501
+player2 wins: 200
+ties: 299
+
+Eta to 0.05 -> 0.0015
+-----------------------------
+player1 wins: 501
+player2 wins: 132
+ties: 367
+-----------------------------
+player1 wins: 501
+player2 wins: 141
+ties: 358
+-----------------------------
+player1 wins: 501
+player2 wins: 140
+ties: 359
+-----------------------------
+player1 wins: 501
+player2 wins: 140
+ties: 359
+-----------------------------
+player1 wins: 501
+player2 wins: 140
+ties: 359
+
+player two with player 1 weights
+-----------------------------
+player1 wins: 15
+player2 wins: 15
+ties: 970
+-----------------------------
+player1 wins: 18 
+player2 wins: 17 
+ties: 965 

@@ -1,6 +1,7 @@
 # Python 3.8
 import numpy as np
 import collections
+import time
 import pickle
 import copy
 
@@ -27,8 +28,6 @@ class TicTacToe:
     def has_ended(self):
         if winner:=self.who_win() is not None:
             self.winner = winner
-            print('rewarding')
-            self.reward(self.p1, self.p2) if winner == self.p1 else self.reward(self.p2, self.p1)
             return True
         elif self.turns == 9:
             return True
@@ -126,7 +125,7 @@ class Player:
     FILE_NAME = 'experience'
     WEIGHTS_FILE = 'weights'
 
-    def __init__(self, symbol, banana_rate=0.3, weight=0.2, name='terminator', eta=0.1):
+    def __init__(self, symbol, banana_rate=0.3, weight=0.2, name='terminator', eta=0.0015):
         self.symbol = symbol
         # banana_rate means the % of times the player would take a random action, -- HE WENT BANANAS 🍌
         self.banana_rate = banana_rate
@@ -135,7 +134,7 @@ class Player:
         self.name = name
         self.eta = eta
         self.values = np.zeros(6)
-        self.weights = np.zeros(6)
+        self.weights = np.array([1,1,1,-1,-1,-1])
         self.values = np.zeros(6)
         self.load_experience()
         self.load_weights()
@@ -167,7 +166,7 @@ class Player:
 
     def reward(self, value):
         for i in range(self.experience.size):
-            self.experience[i] += self.weights[i] * (value - self.experience[i])
+            self.experience[i] = self.weights[i] * (value - self.experience[i])
         print(self.experience)
         self.save_experience()
 
@@ -239,7 +238,7 @@ class Player:
                 v_train = self.evaluate(lines)
                 v = self.evaluate(self.tic_tac_toe.lines())
                 for i in range(self.weights.size):
-                    self.weights[i] = self.weights[i] + self.eta*(v_train - v)*self.values[i]
+                    self.weights[i] += self.eta*(v_train - v)*self.values[i]
                 self.save_weights()
 
 
@@ -249,7 +248,7 @@ class Player:
     # ------------------------------------------------------ #
 
     def load_experience(self):
-        with open("{file}_{name}.pkl".format(file='experience', name=self.name), 'rb') as f:
+        with open("{file}_{name}.pkl".format(file='experience', name='player_one'), 'rb') as f:
             try:
                 self.experience = pickle.load(f)
             except EOFError:
@@ -264,7 +263,7 @@ class Player:
             try:
                 self.weights = pickle.load(f)
             except EOFError:
-                self.experience = np.zeros(6)
+                self.weights = np.zeros(6)
 
     def save_weights(self):
         with open("{file}_{name}.pkl".format(file='weights', name=self.name), 'wb') as f:
@@ -288,8 +287,16 @@ class Judger:
         self.ttt.play(self.ttt.turn.choose_action())
         self.ttt.turns += 1
 
+    def save_history(self, player1_wins, player2_wins, ties):
+        with open("history.txt", "a+") as f:
+            f.write("-----------------------------\n")
+            f.write("player1 wins: {player1_wins} \n".format(player1_wins=player1_wins))
+            f.write("player2 wins: {player2_wins} \n".format(player2_wins=player2_wins))
+            f.write("ties: {ties} \n".format(ties=ties))
 
-def train(rounds=500):
+
+
+def train(rounds=1000):
     player1 = Player(symbol= P1_SYMBOL, name='player_one')
     player2 = Player(symbol= P2_SYMBOL, name='player_two')
     player1_wins = 0
@@ -312,10 +319,13 @@ def train(rounds=500):
             print('tie')
             ties += 1
         judger.reset()
+
+        aux = judger.p1         # Switch sides
+        judger.p1 = judger.p2
+        judger.p2 = aux
+        time.sleep(0.01)        # Este sleep es para que la computadora no se prenda fuego xdxd
     print('weights', player1.weights)
     print('weights', player2.weights)
-    print('experience', player1.experience)
-    print('experience', player2.experience)
     print('player 1 wins:', player1_wins)
     print('player 2 wins:', player2_wins)
     print('ties:', ties)
@@ -325,5 +335,9 @@ def train(rounds=500):
     player2.save_experience()
     player2.save_weights()
 
+    judger.save_history(player1_wins=player1_wins, player2_wins=player2_wins, ties=ties)
+
+def play_against():
+    NotImplemented
 
 train()
