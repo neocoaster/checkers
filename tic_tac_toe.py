@@ -10,6 +10,12 @@ P2_SYMBOL = "2"
 ROWS = 3
 EMPTY_CELL = 0
 COLUMNS = 3
+ME_0_TO_WIN = 0
+ME_1_TO_WIN = 1
+ME_2_TO_WIN = 2
+OP_0_TO_WIN = 3
+OP_1_TO_WIN = 4
+OP_2_TO_WIN = 5
 class TicTacToe:
 
     def __init__(self, p1, p2):
@@ -26,8 +32,8 @@ class TicTacToe:
         self.board_hash = hash(str(self.board))
 
     def has_ended(self):
-        if winner:=self.who_win() is not None:
-            self.winner = winner
+        if self.who_win() is not None:
+            self.winner = self.who_win()
             return True
         elif self.turns == 9:
             return True
@@ -97,10 +103,17 @@ class TicTacToe:
 
         return False
 
+    def winning_play(self, play):
+        ttt = copy.deepcopy(self)
+        ttt.play(play)
+        if ttt.has_ended():
+            return True
+        else:
+            return False
+
     def play(self, position):
         self.board[position] = self.turn.symbol
         self.turn = self.p1 if self.turn == self.p2 else self.p2
-
 
     def lines(self):
         result = []
@@ -125,7 +138,7 @@ class Player:
     FILE_NAME = 'experience'
     WEIGHTS_FILE = 'weights'
 
-    def __init__(self, symbol, banana_rate=0.3, weight=0.2, name='terminator', eta=0.0015):
+    def __init__(self, symbol, banana_rate=0.3, weight=0.2, name='terminator', eta=0.00015):
         self.symbol = symbol
         # banana_rate means the % of times the player would take a random action, -- HE WENT BANANAS 🍌
         self.banana_rate = banana_rate
@@ -134,10 +147,11 @@ class Player:
         self.name = name
         self.eta = eta
         self.values = np.zeros(6)
-        self.weights = np.array([1,1,1,-1,-1,-1])
-        self.values = np.zeros(6)
+
         self.load_experience()
         self.load_weights()
+        self.weights[0]=100
+        self.weights[3]=-100
 
     def set_tic_tac_toe(self, tic_tac_toe):
         self.tic_tac_toe = tic_tac_toe
@@ -150,8 +164,8 @@ class Player:
                 possible_board = board.copy()
                 possible_board[k] = self.symbol
                 possible_board_hash = hash(str(possible_board))
-                if value := value(self, possible_board_hash) >= max_val:
-                    max_val = value
+                if value(self, possible_board_hash) >= max_val:
+                    max_val = value(self, possible_board_hash)
                     play = k
         else:
             play_index = np.random.choice(len(positions))
@@ -167,8 +181,9 @@ class Player:
     def reward(self, value):
         for i in range(self.experience.size):
             self.experience[i] = self.weights[i] * (value - self.experience[i])
-        print(self.experience)
         self.save_experience()
+
+    # Reinforcement learning ------------------------------------------------------END
 
 
     # ------------------------------------------------------------------------------------------------ #
@@ -185,59 +200,53 @@ class Player:
 
 
     def choose_action(self):
-        positions = self.tic_tac_toe.avaliable_positions()
-        if positions :
-            max_val=0
-            play = positions[0]
+        if positions:=self.tic_tac_toe.avaliable_positions() :
+            max_val = -100
             for k in positions:
                 tic_tac_toe = copy.deepcopy(self.tic_tac_toe)
                 tic_tac_toe.play(k)
                 lines = tic_tac_toe.lines()
-                if value := self.evaluate(lines) >= max_val:
-                    max_val = value
+                if tic_tac_toe.winning_play(k):
+                    return k
+                if self.evaluate(lines) >= max_val:
+                    max_val = self.evaluate(lines)
                     play = k
             return play
         return False
 
     def evaluate(self, lines):
-        ME_0_TO_WIN = 0
-        ME_1_TO_WIN = 1
-        ME_2_TO_WIN = 2
-        OP_0_TO_WIN = 3
-        OP_1_TO_WIN = 4
-        OP_2_TO_WIN = 5
         self.calculate_values(lines)
-        if (self.values[ME_0_TO_WIN] > 0):           # If the plaher has 3 in a line
-            return 100                               # WIN
-        elif (self.values[OP_0_TO_WIN] > 0):         # If the opponent player has 3 in a line
-            return -100                              # LOSE
-        else:
-            return np.dot(self.weights, self.values) # EVALUATE
+        if self.values[ME_0_TO_WIN] > 0:
+            return float("inf")
+        return np.dot(self.weights, self.values) # EVALUATE
 
     def calculate_values(self, lines):
         # check for conditions described and assign values to self.values
-        ME_0_TO_WIN = 0
-        ME_1_TO_WIN = 1
-        ME_2_TO_WIN = 2
-        OP_0_TO_WIN = 3
-        OP_1_TO_WIN = 4
-        OP_2_TO_WIN = 5
         self.values = np.zeros(6)
         self.values[ME_0_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 3, lines))
-        self.values[ME_1_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 2 and collections.Counter(x)[EMPTY_CELL]== 1, lines))
-        self.values[ME_2_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 1 and collections.Counter(x)[EMPTY_CELL]== 2, lines))
-        self.values[OP_0_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[EMPTY_CELL]== 0, lines))
-        self.values[OP_1_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[EMPTY_CELL]== 1, lines))
-        self.values[OP_2_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[EMPTY_CELL]== 2, lines))
+        self.values[ME_1_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 2 and collections.Counter(x)[float(EMPTY_CELL)]== 1, lines))
+        self.values[ME_2_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 1 and collections.Counter(x)[float(EMPTY_CELL)]== 2, lines))
+        self.values[OP_0_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[float(EMPTY_CELL)]== 0, lines))
+        self.values[OP_1_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[float(EMPTY_CELL)]== 1, lines))
+        self.values[OP_2_TO_WIN] = sum(map(lambda x : collections.Counter(x)[float(self.symbol)] == 0 and collections.Counter(x)[float(EMPTY_CELL)]== 2, lines))
 
     def update_weights(self):
-        tic_tac_training = copy.deepcopy(self.tic_tac_toe)
-        if self.choose_action():
-            tic_tac_training.play(self.choose_action())
+        for play in self.tic_tac_toe.avaliable_positions():
+            player_copy = copy.deepcopy(self)
+            tic_tac_training = player_copy.tic_tac_toe
+            tic_tac_training.play(position=play)
             if lines:=tic_tac_training.lines():
-                v_train = self.evaluate(lines)
+                v_train = player_copy.evaluate(lines)
                 v = self.evaluate(self.tic_tac_toe.lines())
                 for i in range(self.weights.size):
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print(self.eta*(v_train + v)*player_copy.values[i])
+                    # print(self.eta)
+                    # print(v_train)
+                    # print(v)
+                    # print((v_train - v))
+                    # print(player_copy.values[i])
+                    # print('--------------------------------')
                     self.weights[i] += self.eta*(v_train - v)*self.values[i]
                 self.save_weights()
 
@@ -263,12 +272,11 @@ class Player:
             try:
                 self.weights = pickle.load(f)
             except EOFError:
-                self.weights = np.zeros(6)
+                self.weights = np.array([20,4,1,-20,-4,1], dtype='f')
 
     def save_weights(self):
         with open("{file}_{name}.pkl".format(file='weights', name=self.name), 'wb') as f:
             pickle.dump(self.weights, f)
-
 
 class Judger:
     def __init__(self, player1, player2):
@@ -287,6 +295,13 @@ class Judger:
         self.ttt.play(self.ttt.turn.choose_action())
         self.ttt.turns += 1
 
+    def play_against(self):
+        if self.ttt.turn.name == 'human':
+            self.ttt.turn.play()
+        else:
+            self.ttt.play(position=self.ttt.turn.choose_action())
+        self.ttt.turns += 1
+
     def save_history(self, player1_wins, player2_wins, ties):
         with open("history.txt", "a+") as f:
             f.write("-----------------------------\n")
@@ -294,9 +309,7 @@ class Judger:
             f.write("player2 wins: {player2_wins} \n".format(player2_wins=player2_wins))
             f.write("ties: {ties} \n".format(ties=ties))
 
-
-
-def train(rounds=1000):
+def train(rounds=500):
     player1 = Player(symbol= P1_SYMBOL, name='player_one')
     player2 = Player(symbol= P2_SYMBOL, name='player_two')
     player1_wins = 0
@@ -308,7 +321,10 @@ def train(rounds=1000):
             judger.play()
             player1.update_weights()
             player2.update_weights()
+        player1.update_weights()
+        player2.update_weights()
         judger.ttt.show()
+        print("round:", i)
         if judger.ttt.who_win() is not None:
             print('winner: ', judger.ttt.who_win().symbol)
             if judger.ttt.who_win().symbol == P1_SYMBOL :
@@ -318,12 +334,14 @@ def train(rounds=1000):
         else:
             print('tie')
             ties += 1
+
+        print('weights player1:', player1.weights)
+        print('weights player2:', player2.weights)
         judger.reset()
 
         aux = judger.p1         # Switch sides
         judger.p1 = judger.p2
         judger.p2 = aux
-        time.sleep(0.01)        # Este sleep es para que la computadora no se prenda fuego xdxd
     print('weights', player1.weights)
     print('weights', player2.weights)
     print('player 1 wins:', player1_wins)
@@ -337,7 +355,32 @@ def train(rounds=1000):
 
     judger.save_history(player1_wins=player1_wins, player2_wins=player2_wins, ties=ties)
 
-def play_against():
-    NotImplemented
+class Human:
 
-train()
+    def __init__(self, name, symbol= P1_SYMBOL):
+        self.name = name
+        self.symbol = symbol
+
+    def set_tic_tac_toe(self, tic_tac_toe):
+        self.tic_tac_toe = tic_tac_toe
+
+    def play(self):
+        print('insert row')
+        row = int(input())
+        print('insert column')
+        column = int(input())
+        play = (row,column)
+        self.tic_tac_toe.play(position=play)
+
+def play_against():
+    opponent = Player(symbol=P2_SYMBOL, name='manini')
+    player = Human(symbol=P1_SYMBOL, name='human')
+    judger = Judger(player1=player, player2=opponent)
+    while not judger.ttt.has_ended():
+        judger.ttt.show()
+        judger.play_against()
+
+    if judger.ttt.who_win() is not None:
+        print('winner: ', judger.ttt.who_win().symbol)
+    else:
+        print('tie')
