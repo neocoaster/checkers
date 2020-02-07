@@ -7,6 +7,7 @@ import copy
 from random import *
 import random
 
+
 P1_SYMBOL = "1"
 P2_SYMBOL = "2"
 ROWS = 3
@@ -109,52 +110,18 @@ class Player:
     FILE_NAME = 'experience'
     WEIGHTS_FILE = 'weights'
 
-    def __init__(self, symbol, banana_rate=0.3, weight=0.2, name='terminator', eta=0.001):
+    def __init__(self, symbol, name='terminator', eta=0.001):
         self.symbol = symbol
-        # banana_rate means the % of times the player would take a random action, -- HE WENT BANANAS \
-        self.banana_rate = banana_rate
         self.plays = []
-        self.weight = weight
         self.name = name
         self.eta = eta
         self.values = np.zeros(6)
 
-        self.load_experience()
         self.load_weights()
 
 
     def set_tic_tac_toe(self, tic_tac_toe):
         self.tic_tac_toe = tic_tac_toe
-
-# Reinforcement learning ----------------------------------------------------BEGIN
-    def make_action(self, positions, board):
-        if np.random.uniform(0, 1) >= self.banana_rate:
-            max_val = -float('inf')
-            for k in positions:
-                possible_board = board.copy()
-                possible_board[k] = self.symbol
-                possible_board_hash = hash(str(possible_board))
-                if value(self, possible_board_hash) >= max_val:
-                    max_val = value(self, possible_board_hash)
-                    play = k
-        else:
-            play_index = np.random.choice(len(positions))
-            play = positions[play_index]
-        return play
-
-    def value(self, board_hash):
-        if value := self.experience.get(board_hash) is None:
-            return 0
-        else:
-            return value
-
-    def reward(self, value):
-        for i in range(self.experience.size):
-            self.experience[i] = self.weights[i] * (value - self.experience[i])
-        self.save_experience()
-
-# Reinforcement learning ------------------------------------------------------END
-
 
     # ------------------------------------------------------------------------------------------------ #
     # The evaluation function will be w0x0 + w1x1 + w2x2 + w3x3 + w4x4 + w5x5                          #
@@ -218,17 +185,6 @@ class Player:
     # --------------------- Load Data ---------------------- #
     # ------------------------------------------------------ #
 
-    def load_experience(self):
-        with open("{file}_{name}.pkl".format(file='experience', name=self.name), 'rb') as f:
-            try:
-                self.experience = pickle.load(f)
-            except EOFError:
-                self.experience = np.zeros(6)
-
-    def save_experience(self):
-        with open("{file}_{name}.pkl".format(file='experience', name=self.name), 'wb') as f:
-            pickle.dump(self.experience, f)
-
     def load_weights(self):
         with open("{file}_{name}.pkl".format(file='weights', name=self.name), 'rb') as f:
             try:
@@ -279,9 +235,40 @@ class Judger:
             f.write("player2 wins: {player2_wins} \n".format(player2_wins=player2_wins))
             f.write("ties: {ties} \n".format(ties=ties))
 
-def train(rounds=500):
-    player1 = Player(symbol= P1_SYMBOL, name='woodu')
-    player2 = Player(symbol= P2_SYMBOL, name='player_two')
+class Human:
+
+    def __init__(self, name, symbol= P1_SYMBOL):
+        self.name = name
+        self.symbol = symbol
+
+    def set_tic_tac_toe(self, tic_tac_toe):
+        self.tic_tac_toe = tic_tac_toe
+
+    def play(self):
+        print('insert row')
+        row = int(input())
+        print('insert column')
+        column = int(input())
+        play = (row,column)
+        self.tic_tac_toe.play(position=play)
+
+class RandomPlayer:
+
+    def __init__(self, name, symbol):
+        self.name = name
+        self.symbol = symbol
+
+    def set_tic_tac_toe(self, tic_tac_toe):
+        self.tic_tac_toe = tic_tac_toe
+
+    def choose_action(self):
+        possible_plays = self.tic_tac_toe.avaliable_positions()
+        play = random.choice(possible_plays)
+        return play
+
+def train(rounds=500,eta=0.01):
+    player1 = Player(symbol= P1_SYMBOL, name='woodu', eta=eta)
+    player2 = Player(symbol= P2_SYMBOL, name='player_two', eta=eta)
     player1_wins = 0
     ties = 0
     player2_wins = 0
@@ -296,7 +283,7 @@ def train(rounds=500):
             print('winner: ', judger.ttt.who_win().symbol)
             if judger.ttt.who_win().symbol == P1_SYMBOL :
                 player1_wins += 1
-            if judger.ttt.who_win().symbol == P2_SYMBOL :
+            else:
                 player2_wins += 1
         else:
             print('tie')
@@ -322,23 +309,6 @@ def train(rounds=500):
 
     judger.save_history(player1_wins=player1_wins, player2_wins=player2_wins, ties=ties)
 
-class Human:
-
-    def __init__(self, name, symbol= P1_SYMBOL):
-        self.name = name
-        self.symbol = symbol
-
-    def set_tic_tac_toe(self, tic_tac_toe):
-        self.tic_tac_toe = tic_tac_toe
-
-    def play(self):
-        print('insert row')
-        row = int(input())
-        print('insert column')
-        column = int(input())
-        play = (row,column)
-        self.tic_tac_toe.play(position=play)
-
 def play_against():
     opponent = Player(symbol=P2_SYMBOL, name='woodu')
     player = Human(symbol=P1_SYMBOL, name='human')
@@ -355,22 +325,8 @@ def play_against():
     else:
         print('tie')
 
-class RandomPlayer:
-
-    def __init__(self, name, symbol):
-        self.name = name
-        self.symbol = symbol
-
-    def set_tic_tac_toe(self, tic_tac_toe):
-        self.tic_tac_toe = tic_tac_toe
-
-    def choose_action(self):
-        possible_plays = self.tic_tac_toe.avaliable_positions()
-        play = random.choice(possible_plays)
-        return play
-
-def random_train(rounds=500):
-    player1 = Player(symbol= P1_SYMBOL, name='woodu')
+def random_train(rounds=500, training=True, eta=0.01):
+    player1 = Player(symbol= P1_SYMBOL, name='woodu', eta=eta)
     player2 = RandomPlayer(symbol= P2_SYMBOL, name='randomator')
     player1_wins = 0
     ties = 0
@@ -378,7 +334,7 @@ def random_train(rounds=500):
     judger = Judger(player1=player1, player2=player2)
     for i in range(rounds):
         while not judger.ttt.has_ended():
-            if judger.ttt.turn.name == player1.name:
+            if judger.ttt.turn.name == player1.name and training:
                 judger.ttt.turn.update_weights()
             judger.play()
         judger.ttt.show()
@@ -402,44 +358,6 @@ def random_train(rounds=500):
     print('random wins:', random_wins)
     print('ties:', ties)
     print('accuracy:', (player1_wins+ties)/rounds)
-    player1.save_weights()
-
-    judger.save_history(player1_wins=player1_wins, player2_wins=random_wins, ties=ties)
-
-
-def reinforcement_vs_random(rounds=500):
-    player1 = Player(symbol= P1_SYMBOL, name='player_two')
-    player2 = RandomPlayer(symbol= P2_SYMBOL, name='randomator')
-    player1_wins = 0
-    ties = 0
-    random_wins = 0
-    judger = Judger(player1=player1, player2=player2)
-    for i in range(rounds):
-        while not judger.ttt.has_ended():
-            if judger.ttt.turn.name == player1.name:
-                judger.ttt.turn.update_weights()
-            judger.play()
-        judger.ttt.show()
-        print("round:", i)
-        print('weights player1:', player1.weights)
-        if judger.ttt.who_win() is not None:
-            print('winner: ', judger.ttt.who_win().symbol)
-            if judger.ttt.who_win().symbol == P1_SYMBOL :
-                player1_wins += 1
-            if judger.ttt.who_win().symbol == P2_SYMBOL :
-                random_wins += 1
-        else:
-            print('tie')
-            ties += 1
-        judger.reset()
-
-        aux = judger.p1         # Switch sides
-        judger.p1 = judger.p2
-        judger.p2 = aux
-    print('player 1 wins:', player1_wins)
-    print('random wins:', random_wins)
-    print('ties:', ties)
-
     player1.save_weights()
 
     judger.save_history(player1_wins=player1_wins, player2_wins=random_wins, ties=ties)
