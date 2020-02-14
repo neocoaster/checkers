@@ -30,8 +30,8 @@ class TicTacToe:
         self.turns = 0
 
     def has_ended(self):
-        if self.who_win() is not None:
-            self.winner = self.who_win()
+        if self.who_won() is not None:
+            self.winner = self.who_won()
             return True
         elif self.turns == 9:
             return True
@@ -42,7 +42,7 @@ class TicTacToe:
         winner.reward(1)
         loser.reward(0)
 
-    def who_win(self):
+    def who_won(self):
         if self.exists_winning_combination():
             return self.last_player_to_play()
         else:
@@ -206,6 +206,10 @@ class Judger:
         self.ttt.play(self.ttt.turn.choose_action())
         self.ttt.turns += 1
 
+    def switch_sides(self):
+        aux = self.p1         # Switch sides
+        self.p1 = self.p2
+        self.p2 = aux
 
     def play_against(self):
         if self.ttt.turn.name == 'human':
@@ -267,9 +271,9 @@ def train(rounds=500,eta=0.01, training=True, train_p1=True):
             judger.play()
         judger.ttt.show()
         print("round:", i + 1)
-        if judger.ttt.who_win() is not None:
-            print('winner: ', judger.ttt.who_win().symbol)
-            if judger.ttt.who_win().symbol == P1_SYMBOL :
+        if judger.ttt.who_won() is not None:
+            print('winner: ', judger.ttt.who_won().symbol)
+            if judger.ttt.who_won().symbol == P1_SYMBOL :
                 player1_wins += 1
             else:
                 player2_wins += 1
@@ -281,9 +285,7 @@ def train(rounds=500,eta=0.01, training=True, train_p1=True):
         print('weights player2:', player2.weights)
         judger.reset()
 
-        aux = judger.p1         # Switch sides
-        judger.p1 = judger.p2
-        judger.p2 = aux
+        judger.switch_sides()
     print('weights', player1.weights)
     print('weights', player2.weights)
     print('player 1 wins:', player1_wins)
@@ -305,8 +307,8 @@ def play_against():
         judger.play_against()
         judger.ttt.show()
 
-    if judger.ttt.who_win() is not None:
-        print('winner: ', judger.ttt.who_win().symbol)
+    if judger.ttt.who_won() is not None:
+        print('winner: ', judger.ttt.who_won().symbol)
     else:
         print('tie')
 
@@ -325,20 +327,18 @@ def random_train(rounds=500, training=True, eta=0.01):
         judger.ttt.show()
         print("round:", i)
         print('weights player1:', player1.weights)
-        if judger.ttt.who_win() is not None:
-            print('winner: ', judger.ttt.who_win().symbol)
-            if judger.ttt.who_win().symbol == P1_SYMBOL :
+        if judger.ttt.who_won() is not None:
+            print('winner: ', judger.ttt.who_won().symbol)
+            if judger.ttt.who_won().symbol == P1_SYMBOL :
                 player1_wins += 1
-            if judger.ttt.who_win().symbol == P2_SYMBOL :
+            if judger.ttt.who_won().symbol == P2_SYMBOL :
                 random_wins += 1
         else:
             print('tie')
             ties += 1
         judger.reset()
 
-        aux = judger.p1         # Switch sides
-        judger.p1 = judger.p2
-        judger.p2 = aux
+        judger.switch_sides()
     print('player 1 wins:', player1_wins)
     print('random wins:', random_wins)
     print('ties:', ties)
