@@ -297,7 +297,7 @@ def train(rounds=500,eta=0.01, training=True, train_p1=True):
     judger.save_history(player1_wins=player1_wins, player2_wins=player2_wins, ties=ties)
 
 def play_against():
-    opponent = Player(symbol=P2_SYMBOL, name='woodu')
+    opponent = Player(symbol=P2_SYMBOL, name='zero')
     player = Human(symbol=P1_SYMBOL, name='human')
     if randint(0,1) == 0:
         judger = Judger(player1=player, player2=opponent)
